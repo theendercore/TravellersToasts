@@ -2,7 +2,7 @@ package retr0.travellerstoasts.util;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.tag.convention.v1.ConventionalBiomeTags;
+import net.fabricmc.fabric.api.tag.convention.v2.ConventionalBiomeTags;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
@@ -71,6 +71,6 @@ public final class BiomePredictionUtil {
             // For ocean biomes, the mood may be too high. We instead check if the sky is visible (i.e. underwater).
             || player.clientLevel.canSeeSkyFromBelowWater(player.blockPosition())
             // For cave biomes, we consider their features to always be visible.
-            || biome.is(ConventionalBiomeTags.CAVES);
+            || biome.is(ConventionalBiomeTags.IS_CAVE);
     }
 }

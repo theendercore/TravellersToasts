@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import retr0.travellerstoasts.extension.ExtensionServerPlayerEntity;
 import retr0.travellerstoasts.network.PacketRegistry;
-import retr0.travellerstoasts.network.UpdateVisitedBiomesS2CPacket;
+import retr0.travellerstoasts.network.payloads.UpdateVisitedBiomesS2CPayload;
 import retr0.travellerstoasts.util.ModUsageManager;
 
 import java.util.Collection;
@@ -27,6 +27,7 @@ public class TravellersToasts implements ModInitializer {
         // TODO: IMPLMEMNENT CUSTOM BIOMES
         LOGGER.info("Initialized TravellersToasts!");
 
+        PacketRegistry.registerPayloads();
         PacketRegistry.registerC2SPackets();
         ModUsageManager.init();
 
@@ -37,23 +38,23 @@ public class TravellersToasts implements ModInitializer {
             var advancementEntry = server.getAdvancements().get(mc("adventure/adventuring_time"));
             var obtainedCriteria = (Collection<String>) handler.player.getAdvancements().getOrStartProgress(advancementEntry).getCompletedCriteria();
 
-            UpdateVisitedBiomesS2CPacket.send(obtainedCriteria, handler.player);
+            UpdateVisitedBiomesS2CPayload.send(obtainedCriteria, handler.player);
         });
     }
 
     public static ResourceLocation rl(String namespace, String path) {
-        return new ResourceLocation(namespace, path);
+        return ResourceLocation.fromNamespaceAndPath(namespace, path);
     }
 
-    public static ResourceLocation modRl( String path) {
+    public static ResourceLocation modRl(String path) {
         return rl(MOD_ID, path);
     }
 
     public static ResourceLocation mc(String path) {
-        return new ResourceLocation(path);
+        return ResourceLocation.withDefaultNamespace(path);
     }
 
     public static ResourceLocation parse(String rl) {
-        return new ResourceLocation(rl);
+        return ResourceLocation.parse(rl);
     }
 }

@@ -3,7 +3,6 @@ package retr0.travellerstoasts.util;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.tag.convention.v1.ConventionalBiomeTags;
 import net.minecraft.SharedConstants;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementNode;
@@ -22,12 +21,13 @@ import retr0.carrotconfig.config.ConfigSavedCallback;
 import retr0.travellerstoasts.BiomeToast;
 import retr0.travellerstoasts.config.TravellersToastsConfig;
 import retr0.travellerstoasts.mixin.AccessorBossBarHud;
-import retr0.travellerstoasts.network.TrackInhabitedTimeC2SPacket;
+import retr0.travellerstoasts.network.payloads.TrackInhabitedTimeC2SPayload;
 
 import java.util.*;
 
-import static net.fabricmc.fabric.api.tag.convention.v1.ConventionalBiomeTags.OCEAN;
-import static net.fabricmc.fabric.api.tag.convention.v1.ConventionalBiomeTags.RIVER;
+import static net.fabricmc.fabric.api.tag.convention.v2.ConventionalBiomeTags.IS_OCEAN;
+import static net.fabricmc.fabric.api.tag.convention.v2.ConventionalBiomeTags.IS_AQUATIC_ICY;
+import static net.fabricmc.fabric.api.tag.convention.v2.ConventionalBiomeTags.IS_RIVER;
 import static retr0.travellerstoasts.TravellersToasts.mc;
 
 @Environment(EnvType.CLIENT)
@@ -56,7 +56,7 @@ public class BiomeToastManager {
             if (!configClass.isAssignableFrom(TravellersToastsConfig.class)) return;
 
             instance.resetState(false);
-            TrackInhabitedTimeC2SPacket.send(-1); // Stop server from tracking player.
+            TrackInhabitedTimeC2SPayload.send(-1); // Stop server from tracking player.
         });
 
         // Try to get already-explored biomes client-side. This solution works whether the server has TravellersToasts
@@ -67,7 +67,7 @@ public class BiomeToastManager {
                 public void onUpdateAdvancementProgress(AdvancementNode advancement, AdvancementProgress progress) {
                     if (!advancement.holder().id().equals(mc("adventure/adventuring_time"))) return;
 
-                    var visitedBiomes = ((Collection<String>) progress.getCompletedCriteria()).stream().map(ResourceLocation::new).toList();
+                    var visitedBiomes = ((Collection<String>) progress.getCompletedCriteria()).stream().map(ResourceLocation::parse).toList();
                     BiomeToastManager.getInstance().addVisitedBiomes(visitedBiomes);
                 }
 
@@ -97,7 +97,7 @@ public class BiomeToastManager {
         // inhabited time to be tracked (waiting for a response).
         if (requestServerCheck) {
             if (!awaitingServerResponse) {
-                TrackInhabitedTimeC2SPacket.send(TravellersToastsConfig.maxInhabitedTime);
+                TrackInhabitedTimeC2SPayload.send(TravellersToastsConfig.maxInhabitedTime);
                 awaitingServerResponse = true;
             }
             return;
@@ -136,7 +136,7 @@ public class BiomeToastManager {
      */
     private boolean doesPlayerHaveValidState(LocalPlayer player) {
         var currentPos = player.position();
-        var isOceanBiome = (currentBiome.is(RIVER) || currentBiome.is(OCEAN)) && !currentBiome.is(ConventionalBiomeTags.AQUATIC_ICY);
+        var isOceanBiome = (currentBiome.is(IS_RIVER) || currentBiome.is(IS_OCEAN)) && !currentBiome.is(IS_AQUATIC_ICY);
 
         // Don't decrement or increment ticksEnteringBiome if the player is not moving.
         var movementChecks = player.input.hasForwardImpulse() && currentPos.distanceToSqr(previousPos) > 0.004;

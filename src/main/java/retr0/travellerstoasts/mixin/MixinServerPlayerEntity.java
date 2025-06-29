@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import retr0.travellerstoasts.extension.ExtensionServerPlayerEntity;
-import retr0.travellerstoasts.network.TrackInhabitedTimeS2CPacket;
+import retr0.travellerstoasts.network.payloads.TrackInhabitedTimeS2CPayload;
 
 @Mixin(ServerPlayer.class)
 public abstract class MixinServerPlayerEntity extends Player implements ExtensionServerPlayerEntity {
@@ -27,7 +27,7 @@ public abstract class MixinServerPlayerEntity extends Player implements Extensio
     @Override
     public void travellersToasts$stopTracking(boolean finishedQuery) {
         maxInhabitedTime = -1; // Stop tracking.
-        TrackInhabitedTimeS2CPacket.send(finishedQuery, (ServerPlayer) (Object) this);
+        TrackInhabitedTimeS2CPayload.send(finishedQuery, (ServerPlayer) (Object) this);
     }
 
 

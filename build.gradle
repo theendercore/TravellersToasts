@@ -25,18 +25,19 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// --- Fabric API ---
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	// modImplementation(fabricApi.module("fabric-api-base", project.fabric_version))
-	modImplementation(fabricApi.module("fabric-networking-api-v1", project.fabric_version))
-	modImplementation(fabricApi.module("fabric-entity-events-v1", project.fabric_version))
-	modImplementation(fabricApi.module("fabric-resource-loader-v0", project.fabric_version))
-	modImplementation(fabricApi.module("fabric-convention-tags-v1", project.fabric_version))
+//	modImplementation(fabricApi.module("fabric-networking-api-v1", project.fabric_version))
+//	modImplementation(fabricApi.module("fabric-entity-events-v1", project.fabric_version))
+//	modImplementation(fabricApi.module("fabric-resource-loader-v0", project.fabric_version))
+//	modImplementation(fabricApi.module("fabric-convention-tags-v1", project.fabric_version))
 
 	// --- CarrotConfig ---
 	modImplementation "com.github.2Retr0:carrotconfig:${project.carrotconfig_version}"
 	include "com.github.2Retr0:carrotconfig:${project.carrotconfig_version}"
 
 	// --- Dev Environment Dependencies ---
-	modLocalRuntime "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+//	modLocalRuntime "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	modLocalRuntime "maven.modrinth:modmenu:${project.modmenu_version}"
 	// modLocalRuntime "maven.modrinth:tectonic:1.1.9+1.19.4+mod"
 }
@@ -60,13 +61,13 @@ java {
 	// If you remove this line, sources will not be generated.
 	withSourcesJar()
 
-	sourceCompatibility = JavaVersion.VERSION_17
-	targetCompatibility = JavaVersion.VERSION_17
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
 }
 
 jar {
 	from("LICENSE") {
-		rename { "${it}_${archivesBaseName}"}
+		rename { "${it}_${archives_base_name}"}
 	}
 }
 
