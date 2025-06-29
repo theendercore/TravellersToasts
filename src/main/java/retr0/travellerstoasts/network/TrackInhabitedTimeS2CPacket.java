@@ -11,10 +11,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import retr0.travellerstoasts.util.BiomeToastManager;
 
-import static retr0.travellerstoasts.TravellersToasts.MOD_ID;
+import static retr0.travellerstoasts.TravellersToasts.modRl;
 
 public class TrackInhabitedTimeS2CPacket {
-    public static final ResourceLocation INHABITED_TIME_TRACK_RESPONSE_ID = new ResourceLocation(MOD_ID, "inhabited_time_track_response");
+    public static final ResourceLocation INHABITED_TIME_TRACK_RESPONSE_ID = modRl( "inhabited_time_track_response");
 
     public static void send(boolean finishedQuery, ServerPlayer player) {
         var buf = PacketByteBufs.create();

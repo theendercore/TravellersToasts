@@ -19,10 +19,10 @@ import retr0.travellerstoasts.util.ModUsageManager;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
-import static retr0.travellerstoasts.TravellersToasts.MOD_ID;
+import static retr0.travellerstoasts.TravellersToasts.modRl;
 
 public class ModUsagePacket {
-    public static final ResourceLocation NOTIFY_MOD_USAGE_ID = new ResourceLocation(MOD_ID, "notify_mod_usage");
+    public static final ResourceLocation NOTIFY_MOD_USAGE_ID = modRl("notify_mod_usage");
 
     public static void send(PacketSender sender) {
         sender.sendPacket(NOTIFY_MOD_USAGE_ID, PacketByteBufs.empty());

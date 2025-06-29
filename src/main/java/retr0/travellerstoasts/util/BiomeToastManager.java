@@ -28,6 +28,7 @@ import java.util.*;
 
 import static net.fabricmc.fabric.api.tag.convention.v1.ConventionalBiomeTags.OCEAN;
 import static net.fabricmc.fabric.api.tag.convention.v1.ConventionalBiomeTags.RIVER;
+import static retr0.travellerstoasts.TravellersToasts.mc;
 
 @Environment(EnvType.CLIENT)
 public class BiomeToastManager {
@@ -64,7 +65,7 @@ public class BiomeToastManager {
             handler.getAdvancements().setListener(new ClientAdvancements.Listener() {
                 @Override
                 public void onUpdateAdvancementProgress(AdvancementNode advancement, AdvancementProgress progress) {
-                    if (!advancement.holder().id().equals(new ResourceLocation("adventure/adventuring_time"))) return;
+                    if (!advancement.holder().id().equals(mc("adventure/adventuring_time"))) return;
 
                     var visitedBiomes = ((Collection<String>) progress.getCompletedCriteria()).stream().map(ResourceLocation::new).toList();
                     BiomeToastManager.getInstance().addVisitedBiomes(visitedBiomes);

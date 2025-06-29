@@ -13,19 +13,19 @@ import retr0.travellerstoasts.util.BiomeToastManager;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import static retr0.travellerstoasts.TravellersToasts.MOD_ID;
+import static retr0.travellerstoasts.TravellersToasts.*;
 
 /**
  * A packet to synchronize already-explored biomes from the server to the client. This exists as a fallback to the client-side
  * method present in {@link BiomeToastManager}.
  */
 public class UpdateVisitedBiomesS2CPacket {
-    public static final ResourceLocation UPDATE_VISITED_BIOMES_ID = new ResourceLocation(MOD_ID, "update_visited_biomes");
+    public static final ResourceLocation UPDATE_VISITED_BIOMES_ID = modRl("update_visited_biomes");
 
     public static void send(Collection<String> visited, ServerPlayer player) {
         var buf = PacketByteBufs.create();
         buf.writeInt(visited.size());
-        visited.forEach(id -> buf.writeResourceLocation(new ResourceLocation(id)));
+        visited.forEach(id -> buf.writeResourceLocation(parse(id)));
 
         ServerPlayNetworking.send(player, UPDATE_VISITED_BIOMES_ID, buf);
     }

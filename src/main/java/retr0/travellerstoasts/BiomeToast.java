@@ -2,8 +2,6 @@ package retr0.travellerstoasts;
 
 import retr0.travellerstoasts.config.TravellersToastsConfig;
 
-import static retr0.travellerstoasts.TravellersToasts.MOD_ID;
-
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.toasts.Toast;
 import net.minecraft.client.gui.components.toasts.ToastComponent;
@@ -14,10 +12,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 
+import static retr0.travellerstoasts.TravellersToasts.*;
+
 public class BiomeToast implements Toast {
-    private static final ResourceLocation TEXTURE = new ResourceLocation("toast/recipe");
-    private static final ResourceLocation PLAQUE_TEXTURE = new ResourceLocation(MOD_ID, "toast/plaque");
-    private static final ResourceLocation PLAQUE_ROUNDED_TEXTURE = new ResourceLocation(MOD_ID, "toast/plaque_rounded");
+    private static final ResourceLocation TEXTURE = mc("toast/recipe");
+    private static final ResourceLocation PLAQUE_TEXTURE = modRl("toast/plaque");
+    private static final ResourceLocation PLAQUE_ROUNDED_TEXTURE = modRl("toast/plaque_rounded");
     private static final ResourceLocation FALLBACK_BIOME_TEXTURE = getBiomeIconIdentifier(Biomes.MEADOW.location());
     private static final long DURATION = 5000L;
 
@@ -28,7 +28,7 @@ public class BiomeToast implements Toast {
     public BiomeToast(ResourceLocation biomeId) { this.biomeId = biomeId; }
 
     private static ResourceLocation getBiomeIconIdentifier(ResourceLocation biomeId) {
-        return new ResourceLocation(MOD_ID, "biome/" + biomeId.getNamespace() + "/" + biomeId.getPath());
+        return modRl("biome/" + biomeId.getNamespace() + "/" + biomeId.getPath());
     }
 
     private void drawBiomeIcon(GuiGraphics context, ToastComponent manager, ResourceLocation biomeId) {

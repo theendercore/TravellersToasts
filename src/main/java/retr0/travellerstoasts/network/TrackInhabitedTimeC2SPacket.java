@@ -11,10 +11,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import retr0.travellerstoasts.extension.ExtensionServerPlayerEntity;
 
-import static retr0.travellerstoasts.TravellersToasts.MOD_ID;
+import static retr0.travellerstoasts.TravellersToasts.modRl;
 
 public class TrackInhabitedTimeC2SPacket {
-    public static final ResourceLocation INHABITED_TIME_TRACK_REQUEST_ID = new ResourceLocation(MOD_ID, "inhabited_time_track_request");
+    public static final ResourceLocation INHABITED_TIME_TRACK_REQUEST_ID = modRl("inhabited_time_track_request");
 
     public static void send(float maxInhabitedTimeM) {
         var buf = PacketByteBufs.create();

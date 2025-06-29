@@ -34,10 +34,26 @@ public class TravellersToasts implements ModInitializer {
                 ((ExtensionServerPlayerEntity) player).travellersToasts$stopTracking(false)));
 
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-            var advancementEntry = server.getAdvancements().get(new ResourceLocation("adventure/adventuring_time"));
+            var advancementEntry = server.getAdvancements().get(mc("adventure/adventuring_time"));
             var obtainedCriteria = (Collection<String>) handler.player.getAdvancements().getOrStartProgress(advancementEntry).getCompletedCriteria();
 
             UpdateVisitedBiomesS2CPacket.send(obtainedCriteria, handler.player);
         });
+    }
+
+    public static ResourceLocation rl(String namespace, String path) {
+        return new ResourceLocation(namespace, path);
+    }
+
+    public static ResourceLocation modRl( String path) {
+        return rl(MOD_ID, path);
+    }
+
+    public static ResourceLocation mc(String path) {
+        return new ResourceLocation(path);
+    }
+
+    public static ResourceLocation parse(String rl) {
+        return new ResourceLocation(rl);
     }
 }
