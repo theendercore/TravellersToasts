@@ -1,49 +1,50 @@
 package retr0.travellerstoasts;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.texture.MissingSprite;
-import net.minecraft.client.toast.Toast;
-import net.minecraft.client.toast.ToastManager;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.BiomeKeys;
 import retr0.travellerstoasts.config.TravellersToastsConfig;
 
 import static retr0.travellerstoasts.TravellersToasts.MOD_ID;
 
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.toasts.Toast;
+import net.minecraft.client.gui.components.toasts.ToastComponent;
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
+import net.minecraft.core.Holder;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.Biomes;
+
 public class BiomeToast implements Toast {
-    private static final Identifier TEXTURE = new Identifier("toast/recipe");
-    private static final Identifier PLAQUE_TEXTURE = new Identifier(MOD_ID, "toast/plaque");
-    private static final Identifier PLAQUE_ROUNDED_TEXTURE = new Identifier(MOD_ID, "toast/plaque_rounded");
-    private static final Identifier FALLBACK_BIOME_TEXTURE = getBiomeIconIdentifier(BiomeKeys.MEADOW.getValue());
+    private static final ResourceLocation TEXTURE = new ResourceLocation("toast/recipe");
+    private static final ResourceLocation PLAQUE_TEXTURE = new ResourceLocation(MOD_ID, "toast/plaque");
+    private static final ResourceLocation PLAQUE_ROUNDED_TEXTURE = new ResourceLocation(MOD_ID, "toast/plaque_rounded");
+    private static final ResourceLocation FALLBACK_BIOME_TEXTURE = getBiomeIconIdentifier(Biomes.MEADOW.location());
     private static final long DURATION = 5000L;
 
     private long startTime;
     private boolean justUpdated;
-    private Identifier biomeId;
+    private ResourceLocation biomeId;
 
-    public BiomeToast(Identifier biomeId) { this.biomeId = biomeId; }
+    public BiomeToast(ResourceLocation biomeId) { this.biomeId = biomeId; }
 
-    private static Identifier getBiomeIconIdentifier(Identifier biomeId) {
-        return new Identifier(MOD_ID, "biome/" + biomeId.getNamespace() + "/" + biomeId.getPath());
+    private static ResourceLocation getBiomeIconIdentifier(ResourceLocation biomeId) {
+        return new ResourceLocation(MOD_ID, "biome/" + biomeId.getNamespace() + "/" + biomeId.getPath());
     }
 
-    private void drawBiomeIcon(DrawContext context, ToastManager manager, Identifier biomeId) {
-        var guiAtlasManager = manager.getClient().getGuiAtlasManager();
+    private void drawBiomeIcon(GuiGraphics context, ToastComponent manager, ResourceLocation biomeId) {
+        var guiAtlasManager = manager.getMinecraft().getGuiSprites();
         var sprite = guiAtlasManager.getSprite(getBiomeIconIdentifier(biomeId));
-        if (sprite.getContents().getId().equals(MissingSprite.getMissingSpriteId()))
+        if (sprite.contents().name().equals(MissingTextureAtlasSprite.getLocation()))
             sprite = guiAtlasManager.getSprite(FALLBACK_BIOME_TEXTURE);
 
-        context.drawSprite(8, 8, 0, 16, 16, sprite);
+        context.blit(8, 8, 0, 16, 16, sprite);
     }
 
 
     @Override
-    public Visibility draw(DrawContext context, ToastManager manager, long startTime) {
-        var toastHeader = Text.translatable(MOD_ID + ".toast.header");
-        var biomeName = Text.translatable(biomeId.toTranslationKey("biome"));
+    public Visibility render(GuiGraphics context, ToastComponent manager, long startTime) {
+        var toastHeader = Component.translatable(MOD_ID + ".toast.header");
+        var biomeName = Component.translatable(biomeId.toLanguageKey("biome"));
 
         if (this.justUpdated) {
             this.startTime = startTime;
@@ -51,14 +52,14 @@ public class BiomeToast implements Toast {
         }
 
         // --- Draw Toast Background ---
-        context.drawGuiTexture(TEXTURE, 0, 0, this.getWidth(), this.getHeight());
+        context.blitSprite(TEXTURE, 0, 0, this.width(), this.height());
 
         // --- Draw Toast Description ---
-        context.drawText(manager.getClient().textRenderer, toastHeader, 30, 7, 0xFF500050, false);
-        context.drawText(manager.getClient().textRenderer, biomeName, 30, 18, 0xFF000000, false);
+        context.drawString(manager.getMinecraft().font, toastHeader, 30, 7, 0xFF500050, false);
+        context.drawString(manager.getMinecraft().font, biomeName, 30, 18, 0xFF000000, false);
 
         // --- Draw Biome Icon Plaque ---
-        context.drawGuiTexture(TravellersToastsConfig.roundedIconBackground ? PLAQUE_ROUNDED_TEXTURE : PLAQUE_TEXTURE, 4, 4, 24, 24);
+        context.blitSprite(TravellersToastsConfig.roundedIconBackground ? PLAQUE_ROUNDED_TEXTURE : PLAQUE_TEXTURE, 4, 4, 24, 24);
 
         // --- Draw Biome Icon ---
         drawBiomeIcon(context, manager, biomeId);
@@ -68,20 +69,20 @@ public class BiomeToast implements Toast {
 
 
 
-    private void addBiome(Identifier biomeId) {
+    private void addBiome(ResourceLocation biomeId) {
         this.biomeId = biomeId;
         justUpdated = true;
     }
 
 
 
-    public static void show(ToastManager manager, RegistryEntry<Biome> biome) {
-        BiomeToast biomeToast = manager.getToast(BiomeToast.class, TYPE);
-        biome.getKey().ifPresent(key -> {
+    public static void show(ToastComponent manager, Holder<Biome> biome) {
+        BiomeToast biomeToast = manager.getToast(BiomeToast.class, NO_TOKEN);
+        biome.unwrapKey().ifPresent(key -> {
             if (biomeToast == null)
-                manager.add(new BiomeToast(key.getValue()));
+                manager.addToast(new BiomeToast(key.location()));
             else
-                biomeToast.addBiome(key.getValue());
+                biomeToast.addBiome(key.location());
         });
     }
 }

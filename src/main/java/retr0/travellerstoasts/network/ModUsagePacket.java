@@ -7,12 +7,12 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerLoginNetworking;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientLoginNetworkHandler;
-import net.minecraft.network.PacketByteBuf;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientHandshakePacketListenerImpl;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerLoginNetworkHandler;
-import net.minecraft.util.Identifier;
+import net.minecraft.server.network.ServerLoginPacketListenerImpl;
 import org.jetbrains.annotations.Nullable;
 import retr0.travellerstoasts.util.ModUsageManager;
 
@@ -22,20 +22,20 @@ import java.util.function.Consumer;
 import static retr0.travellerstoasts.TravellersToasts.MOD_ID;
 
 public class ModUsagePacket {
-    public static final Identifier NOTIFY_MOD_USAGE_ID = new Identifier(MOD_ID, "notify_mod_usage");
+    public static final ResourceLocation NOTIFY_MOD_USAGE_ID = new ResourceLocation(MOD_ID, "notify_mod_usage");
 
     public static void send(PacketSender sender) {
         sender.sendPacket(NOTIFY_MOD_USAGE_ID, PacketByteBufs.empty());
     }
 
     public static void receive(
-            MinecraftServer server, ServerLoginNetworkHandler handler, boolean understood, PacketByteBuf buf, ServerLoginNetworking.LoginSynchronizer synchronizer, PacketSender responseSender)
+            MinecraftServer server, ServerLoginPacketListenerImpl handler, boolean understood, FriendlyByteBuf buf, ServerLoginNetworking.LoginSynchronizer synchronizer, PacketSender responseSender)
     {
     }
 
     @Environment(EnvType.CLIENT)
-    public static CompletableFuture<@Nullable PacketByteBuf> receive(
-            MinecraftClient client, ClientLoginNetworkHandler handler, PacketByteBuf buf, Consumer<GenericFutureListener<? extends Future<? super Void>>> listenerAdder)
+    public static CompletableFuture<@Nullable FriendlyByteBuf> receive(
+            Minecraft client, ClientHandshakePacketListenerImpl handler, FriendlyByteBuf buf, Consumer<GenericFutureListener<? extends Future<? super Void>>> listenerAdder)
     {
         ModUsageManager.getInstance().setServerModUsage(true);
         return CompletableFuture.completedFuture(null);

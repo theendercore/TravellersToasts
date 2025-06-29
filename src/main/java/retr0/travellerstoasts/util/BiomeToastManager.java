@@ -5,18 +5,18 @@ import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.tag.convention.v1.ConventionalBiomeTags;
 import net.minecraft.SharedConstants;
-import net.minecraft.advancement.AdvancementEntry;
-import net.minecraft.advancement.AdvancementProgress;
-import net.minecraft.advancement.PlacedAdvancement;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientAdvancementManager;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.biome.Biome;
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.advancements.AdvancementNode;
+import net.minecraft.advancements.AdvancementProgress;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientAdvancements;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import retr0.carrotconfig.config.ConfigSavedCallback;
 import retr0.travellerstoasts.BiomeToast;
@@ -35,16 +35,16 @@ public class BiomeToastManager {
     // Required ticks for the "entering biome" condition.
     private final static int HOLD_TICKS = SharedConstants.TICKS_PER_SECOND * 3;
 
-    private final CooldownHandler<RegistryEntry<Biome>> biomeCooldownHandler =
+    private final CooldownHandler<Holder<Biome>> biomeCooldownHandler =
             new CooldownHandler<>(() -> (long) TravellersToastsConfig.toastCooldownTime * 60000L);
 
-    private final Set<Identifier> visitedBiomes = new HashSet<>();
+    private final Set<ResourceLocation> visitedBiomes = new HashSet<>();
 
     private boolean awaitingServerResponse = false;
     private int ticksExploringBiome = 0;
-    private Vec3d previousPos = Vec3d.ZERO;
-    private RegistryEntry<Biome> previousBiome;
-    private RegistryEntry<Biome> currentBiome;
+    private Vec3 previousPos = Vec3.ZERO;
+    private Holder<Biome> previousBiome;
+    private Holder<Biome> currentBiome;
 
     public static void init() {
         if (instance != null) return;
@@ -61,21 +61,21 @@ public class BiomeToastManager {
         // Try to get already-explored biomes client-side. This solution works whether the server has TravellersToasts
         // installed or not--BUT ONLY if the `adventure/adventuring_time` advancement exists on the server.
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
-            handler.getAdvancementHandler().setListener(new ClientAdvancementManager.Listener() {
+            handler.getAdvancements().setListener(new ClientAdvancements.Listener() {
                 @Override
-                public void setProgress(PlacedAdvancement advancement, AdvancementProgress progress) {
-                    if (!advancement.getAdvancementEntry().id().equals(new Identifier("adventure/adventuring_time"))) return;
+                public void onUpdateAdvancementProgress(AdvancementNode advancement, AdvancementProgress progress) {
+                    if (!advancement.holder().id().equals(new ResourceLocation("adventure/adventuring_time"))) return;
 
-                    var visitedBiomes = ((Collection<String>) progress.getObtainedCriteria()).stream().map(Identifier::new).toList();
+                    var visitedBiomes = ((Collection<String>) progress.getCompletedCriteria()).stream().map(ResourceLocation::new).toList();
                     BiomeToastManager.getInstance().addVisitedBiomes(visitedBiomes);
                 }
 
-                @Override public void selectTab(@Nullable AdvancementEntry advancement) { }
-                @Override public void onRootAdded(PlacedAdvancement root) { }
-                @Override public void onRootRemoved(PlacedAdvancement root) { }
-                @Override public void onDependentAdded(PlacedAdvancement dependent) { }
-                @Override public void onDependentRemoved(PlacedAdvancement dependent) { }
-                @Override public void onClear() { }
+                @Override public void onSelectedTabChanged(@Nullable AdvancementHolder advancement) { }
+                @Override public void onAddAdvancementRoot(AdvancementNode root) { }
+                @Override public void onRemoveAdvancementRoot(AdvancementNode root) { }
+                @Override public void onAddAdvancementTask(AdvancementNode dependent) { }
+                @Override public void onRemoveAdvancementTask(AdvancementNode dependent) { }
+                @Override public void onAdvancementsCleared() { }
             });
         });
     }
@@ -102,9 +102,9 @@ public class BiomeToastManager {
             return;
         }
 
-        BiomeToast.show(MinecraftClient.getInstance().getToastManager(), currentBiome);
+        BiomeToast.show(Minecraft.getInstance().getToasts(), currentBiome);
 
-        currentBiome.getKey().ifPresent(key -> addVisitedBiome(key.getValue()));
+        currentBiome.unwrapKey().ifPresent(key -> addVisitedBiome(key.location()));
         biomeCooldownHandler.refresh(previousBiome);
         previousBiome = currentBiome;
         resetState(false);
@@ -133,16 +133,16 @@ public class BiomeToastManager {
      * for a biome toast to show.
      * @implNote Object state change—previous player position is updated within method.
      */
-    private boolean doesPlayerHaveValidState(ClientPlayerEntity player) {
-        var currentPos = player.getPos();
-        var isOceanBiome = (currentBiome.isIn(RIVER) || currentBiome.isIn(OCEAN)) && !currentBiome.isIn(ConventionalBiomeTags.AQUATIC_ICY);
+    private boolean doesPlayerHaveValidState(LocalPlayer player) {
+        var currentPos = player.position();
+        var isOceanBiome = (currentBiome.is(RIVER) || currentBiome.is(OCEAN)) && !currentBiome.is(ConventionalBiomeTags.AQUATIC_ICY);
 
         // Don't decrement or increment ticksEnteringBiome if the player is not moving.
-        var movementChecks = player.input.hasForwardMovement() && currentPos.squaredDistanceTo(previousPos) > 0.004;
-        var bossBarChecks = ((AccessorBossBarHud) MinecraftClient.getInstance().inGameHud.getBossBarHud()).getBossBars().isEmpty();
+        var movementChecks = player.input.hasForwardImpulse() && currentPos.distanceToSqr(previousPos) > 0.004;
+        var bossBarChecks = ((AccessorBossBarHud) Minecraft.getInstance().gui.getBossOverlay()).getBossBars().isEmpty();
         // Permit only swimming in ocean biomes to count as 'exploration'; otherwise, allow both swimming and walking.
-        var oceanBiomeChecks = (isOceanBiome && player.isSubmergedInWater() && player.isInSwimmingPose())
-                || (!isOceanBiome && (!player.isSubmergedInWater() || player.isInSwimmingPose()));
+        var oceanBiomeChecks = (isOceanBiome && player.isUnderWater() && player.isVisuallySwimming())
+                || (!isOceanBiome && (!player.isUnderWater() || player.isVisuallySwimming()));
 
         previousPos = currentPos;
 
@@ -155,7 +155,7 @@ public class BiomeToastManager {
      * Runs various checks on the player's location (or predicted future location) to estimate whether it is appropriate
      * for a biome toast to show.
      */
-    private boolean isPlayerInValidLocation(ClientPlayerEntity player) {
+    private boolean isPlayerInValidLocation(LocalPlayer player) {
         return BiomePredictionUtil.getFutureBiome(player).equals(currentBiome) &&
                BiomePredictionUtil.areBiomeFeaturesVisible(currentBiome, player);
     }
@@ -165,27 +165,27 @@ public class BiomeToastManager {
     /**
      * Updates the time tracked for 'exploring' a biome. Should be called every game tick.
      */
-    public void tick(ClientPlayerEntity player) {
-        currentBiome = player.getWorld().getBiome(player.getBlockPos());
+    public void tick(LocalPlayer player) {
+        currentBiome = player.level().getBiome(player.blockPosition());
         // Do nothing if the current biome is still on cooldown.
         if (currentBiome.equals(previousBiome) || !biomeCooldownHandler.hasCooled(currentBiome)) return;
 
         // Do nothing if persistent exploration is enabled and if the current biome has already been visited.
-        var currentBiomeId = currentBiome.getKey().map(RegistryKey::getValue).orElse(null);
+        var currentBiomeId = currentBiome.unwrapKey().map(ResourceKey::location).orElse(null);
         if (TravellersToastsConfig.usePersistentExploration && currentBiomeId != null && visitedBiomes.contains(currentBiomeId))
             return;
 
         showToast(ModUsageManager.getInstance().doesServerUseMod() && TravellersToastsConfig.maxInhabitedTime > 0f);
         ticksExploringBiome += doesPlayerHaveValidState(player) && isPlayerInValidLocation(player) ? 1 : -1;
-        ticksExploringBiome = MathHelper.clamp(ticksExploringBiome, 0, HOLD_TICKS);
+        ticksExploringBiome = Mth.clamp(ticksExploringBiome, 0, HOLD_TICKS);
     }
 
 
-    public void addVisitedBiomes(List<Identifier> biomeIds) {
+    public void addVisitedBiomes(List<ResourceLocation> biomeIds) {
         visitedBiomes.addAll(biomeIds);
     }
 
-    public void addVisitedBiome(Identifier biomeId) {
+    public void addVisitedBiome(ResourceLocation biomeId) {
         visitedBiomes.add(biomeId);
     }
 

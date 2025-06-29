@@ -3,7 +3,7 @@ package retr0.travellerstoasts;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import retr0.travellerstoasts.extension.ExtensionServerPlayerEntity;
@@ -34,8 +34,8 @@ public class TravellersToasts implements ModInitializer {
                 ((ExtensionServerPlayerEntity) player).travellersToasts$stopTracking(false)));
 
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-            var advancementEntry = server.getAdvancementLoader().get(new Identifier("adventure/adventuring_time"));
-            var obtainedCriteria = (Collection<String>) handler.player.getAdvancementTracker().getProgress(advancementEntry).getObtainedCriteria();
+            var advancementEntry = server.getAdvancements().get(new ResourceLocation("adventure/adventuring_time"));
+            var obtainedCriteria = (Collection<String>) handler.player.getAdvancements().getOrStartProgress(advancementEntry).getCompletedCriteria();
 
             UpdateVisitedBiomesS2CPacket.send(obtainedCriteria, handler.player);
         });
